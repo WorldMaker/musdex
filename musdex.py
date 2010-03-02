@@ -54,6 +54,7 @@ def save_config(args, config):
         cmd = config['vcs_add'] if 'vcs_add' in config else DARCS_ADD
         check_call(shlex.split(cmd % {'file': conf}))
 
+# TODO: Perhaps the index should instead be a less verbose format?
 def load_index(config):
     index = config['index'] if 'index' in config else DEFAULT_INDEX
     if os.path.exists(index):
@@ -79,6 +80,7 @@ def _datetime_from_epoch(epoch):
     return datetime.datetime(*time.localtime()[:6])
 
 def load_vcs_archive_manifest(config, archive):
+    logging.debug("Loading manifest for %s" % archive)
     cmd = config["vcs_show_files"] if "vcs_show_files" in config \
         else DARCS_SHOW_FILES
     sf = StringIO.StringIO()
@@ -182,6 +184,45 @@ def extract(args):
 
 def combine(args):
     config = load_config(args)
+    index = load_index(config)
+    index_updated = False
+
+    if args.archive: args.archive = map(os.path.relpath, args.archive)
+
+    for archive in config['archives']:
+        combine = False
+        arcf = archive['filename']
+        arcloc = os.path.join(BASEDIR, arcf)
+        if args.archive and arcf not in args.archive:
+            continue
+
+        manifest = load_vcs_manifest(config, arcloc)
+
+        if args.force or arcloc not in index:
+            combine = True
+        else:
+            logging.debug("Checking modification times for %s" % arcf)
+            for file in manifest:
+                if file not in index:
+                    combine = True
+                    break
+                lastmod = _datetime_from_epoch(os.path.getmtime(file))
+                if lastmod > index[file]:
+                    combine = True
+                    break
+                # TODO: Check for deleted files?
+            
+        if combine:
+            logging.info("Combining %s" % arcf)
+            index[arcloc] = datetime.datetime.now()
+            index_updated = True
+            ziparchive = zipfile.ZipFile(arcf, 'w', zipfile.ZIP_DEFLATED)
+            for file in manifest:
+                index[file] = _datetime_from_epoch(os.path.getmtime(file))
+                ziparchive.write(file, os.path.relpath(file, arcloc))
+            ziparchive.close()
+
+    if index_updated: save_index(config, index)
 
 def main(booznik=False):
     parser = argparse.ArgumentParser(prog='musdex' if not booznik else 'xedsum')
