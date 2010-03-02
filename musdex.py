@@ -6,6 +6,7 @@
 # Copyright 2010 Max Battcher. Some rights reserved.
 # Licensed for use under the Ms-RL. See attached LICENSE file.
 from subprocess import check_call
+import StringIO
 import argparse
 import datetime
 import logging
@@ -13,12 +14,13 @@ import os
 import os.path
 import shlex
 import sys
+import time
 import yaml
 import zipfile
 
 BASEDIR = "_musdex"
-DARCS_ADD = "darcs add %(file)s"
-DARCS_SHOW_FILES = "darcs show files %(archive)s"
+DARCS_ADD = 'darcs add "%(file)s"'
+DARCS_SHOW_FILES = 'darcs show files "%(archive)s"'
 DEFAULT_CONFIG = os.path.join(BASEDIR, "musdex.yaml")
 DEFAULT_INDEX = os.path.join(BASEDIR, ".musdex.index.yaml")
 
@@ -73,6 +75,25 @@ def save_index(config, index):
     yaml.dump(f, index)
     f.close()
 
+def _datetime_from_epoch(epoch):
+    return datetime.datetime(*time.localtime()[:6])
+
+def load_vcs_archive_manifest(config, archive):
+    cmd = config["vcs_show_files"] if "vcs_show_files" in config \
+        else DARCS_SHOW_FILES
+    sf = StringIO.StringIO()
+    check_call(shlex.split(cmd % {'archive': archive}), stdout=sf)
+    manifest = sf.getvalue()
+    sf.close()
+    # ASSUME: Broken by newlines with no filenames with newlines
+    files = map(os.path.relpath, manifest.split('\n'))
+    return files
+
+def vcs_add_file(config, file):
+    logging.debug("Adding %s" % path)
+    cmd = config["vcs_add"] if "vcs_add" in config else DARCS_ADD
+    check_call(shlex.split(cmd % {'file': file}))
+
 def add(args):
     config = load_config(args)
     index = load_index(config)
@@ -96,9 +117,7 @@ def add(args):
         logging.info("Adding archive to the VCS: %s" % archive)
         for info in ziparchive.infolist():
             path = os.path.relpath(os.path.join(BASEDIR, archive, info.filename))
-            logging.debug("Adding %s" % path)
-            cmd = config["vcs_add"] if "vcs_add" in config else DARCS_ADD
-            check_call(shlex.split(cmd % {'file': path}))
+            vcs_add_file(config, path)
             index[path] = datetime.datetime(*info.date_time)
 
         if 'archives' not in config: config['archives'] = []
@@ -108,6 +127,58 @@ def add(args):
 
 def extract(args):
     config = load_config(args)
+    index = load_index(config)
+    index_updated = False
+
+    if args.archive: args.archive = map(os.path.relpath, args.archive)
+
+    for archive in config['archives']:
+        arcf = archive['filename']
+        arcloc = os.path.join(BASEDIR, arcf)
+        if args.archive and arcf not in args.archive:
+            continue
+
+        if args.force or arcloc not in index:
+            logging.info("Extracting all of %s" % arcf)
+            ziparchive = zipfile.ZipFile(arcf)
+            ziparchive.extractall(arcloc)
+            index[arcloc] = datetime.datetime.now()
+            index_updated = True
+
+            manifest = load_vcs_archive_manifest(config, arcloc)
+
+            logging.info("Updating index for %s" % arcf)
+            for info in ziparchive.infolist():
+                path = os.path.relpath(os.path.join(arcloc, info.filename))
+                # TODO: More efficient manifest check?
+                if path not in manifest: vcs_add_file(config, path)
+                index[path] = datetime.datetime(*info.date_time)
+        else:
+            logging.debug("Testing for extraction: %s" % arcf)
+            lastmod = _datetime_from_epoch(os.path.getmtime(arcf))
+            if lastmod > index[arcloc]:
+                logging.info("Selectively extracting %s" % arcf)
+                ziparchive = zipfile.ZipFile(arcf)
+                index[arcloc] = datetime.datetime.now()
+                index_updated = True
+
+                manifest = load_vcs_archive_manifest(config, arcloc)
+
+                for info in ziparchive.infolist():
+                    path = os.path.relpath(os.path.join(arcloc, info.filename))
+                    # TODO: More efficient manifest check?
+                    if path not in manifest:
+                        logging.debug("Extracting new file %s" % path)
+                        ziparchive.extract(info, path)
+                        vcs_add_file(config, path)
+                        index[path] = datetime.datetime(*info.date_time)
+                    elif path not in index \
+                    or datetime.datetime(*info.date_time) > index[path]:
+                        logging.debug("Extracting updated file %s" % path)
+                        ziparchive.extract(info, path)
+                        index[path] = datetime.datetime(*info.date_time)
+            
+    if index_updated: save_index(config, index)
 
 def combine(args):
     config = load_config(args)
@@ -116,13 +187,18 @@ def main(booznik=False):
     parser = argparse.ArgumentParser(prog='musdex' if not booznik else 'xedsum')
     parser.add_argument('--config', '-c')
     parser.add_argument('--verbose', '-v', action="store_true", default=False)
+    parser.add_argument('--quiet', '-q', action="store_true", default=False)
     subparsers = parser.add_subparsers()
 
     parser_extract = subparsers.add_parser('extract')
+    parser_extract.add_argument('--force', '-f', action="store_true",
+        default=False)
     parser_extract.add_argument('archive', nargs='*')
     parser_extract.set_defaults(func=extract)
     
     parser_combine = subparsers.add_parser('combine')
+    parser_combine.add_argument('--force', '-f', action="store_true",
+        default=False)
     parser_combine.add_argument('archive', nargs='*')
     parser_combine.set_defaults(func=combine)
 
@@ -136,6 +212,8 @@ def main(booznik=False):
     args = parser.parse_args(args)
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
+    elif not args.quiet:
+        logging.basicConfig(level=logging.INFO)
     args.func(args)
 
 if __name__ == "__main__":
