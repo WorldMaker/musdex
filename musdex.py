@@ -12,15 +12,14 @@ import datetime
 import logging
 import os
 import os.path
-import shlex
 import sys
 import time
 import yaml
 import zipfile
 
 BASEDIR = "_musdex"
-DARCS_ADD = 'darcs add "%(file)s"'
-DARCS_SHOW_FILES = 'darcs show files "%(archive)s"'
+DARCS_ADD = 'darcs add'
+DARCS_SHOW_FILES = 'darcs show files'
 DEFAULT_CONFIG = os.path.join(BASEDIR, "musdex.yaml")
 DEFAULT_INDEX = os.path.join(BASEDIR, ".musdex.index.yaml")
 
@@ -38,7 +37,7 @@ def load_config(args):
     return config
 
 def save_config(args, config):
-    conf = DEFAULT_CONF
+    conf = DEFAULT_CONFIG
     if args.config:
         conf = args.config
     logging.debug("Saving configuration to %s" % conf)
@@ -46,13 +45,13 @@ def save_config(args, config):
     if confdir and not os.path.exists(confdir):
         loggin.info("Config directory does not exist: %s" % confdir)
         os.mkdirs(confdir)
+    new_conf = not os.path.exists(conf)
     f = open(conf, 'w')
-    yaml.dump(f, config)
+    yaml.dump(config, f)
     f.close()
-    if not os.path.exists(conf):
+    if new_conf:
         logging.info("Adding new configuration file to vcs: %s" % conf)
-        cmd = config['vcs_add'] if 'vcs_add' in config else DARCS_ADD
-        check_call(shlex.split(cmd % {'file': conf}))
+        vcs_add_file(config, conf)
 
 # TODO: Perhaps the index should instead be a less verbose format?
 def load_index(config):
@@ -73,7 +72,7 @@ def save_index(config, index):
         logging.info("Index directory does not exist: %s" % idxdir)
         os.mkdirs(idxdir)
     f = open(idx, 'w')
-    yaml.dump(f, index)
+    yaml.dump(index, f)
     f.close()
 
 def _datetime_from_epoch(epoch):
@@ -83,8 +82,10 @@ def load_vcs_archive_manifest(config, archive):
     logging.debug("Loading manifest for %s" % archive)
     cmd = config["vcs_show_files"] if "vcs_show_files" in config \
         else DARCS_SHOW_FILES
+    cmd = cmd.split(' ')
+    cmd.append(archive)
     sf = StringIO.StringIO()
-    check_call(shlex.split(cmd % {'archive': archive}), stdout=sf)
+    check_call(cmd, stdout=sf)
     manifest = sf.getvalue()
     sf.close()
     # ASSUME: Broken by newlines with no filenames with newlines
@@ -92,9 +93,11 @@ def load_vcs_archive_manifest(config, archive):
     return files
 
 def vcs_add_file(config, file):
-    logging.debug("Adding %s" % path)
+    logging.debug("Adding %s" % file)
     cmd = config["vcs_add"] if "vcs_add" in config else DARCS_ADD
-    check_call(shlex.split(cmd % {'file': file}))
+    cmd = cmd.split(' ')
+    cmd.append(file)
+    check_call(cmd)
 
 def add(args):
     config = load_config(args)
@@ -124,8 +127,8 @@ def add(args):
 
         if 'archives' not in config: config['archives'] = []
         config['archives'].append({'filename': archive})
-    save_config(config)
-    save_index(index)
+    save_config(args, config)
+    save_index(config, index)
 
 def extract(args):
     config = load_config(args)
