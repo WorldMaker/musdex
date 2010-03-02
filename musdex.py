@@ -115,9 +115,10 @@ def add(args):
             continue
 
         logging.info("Extracting archive for the first time: %s" % archive)
+        arcloc = os.path.join(BASEDIR, archive)
         ziparchive = zipfile.ZipFile(archive)
-        ziparchive.extractall(os.path.join(BASEDIR, archive))
-        index[os.path.join(BASEDIR, archive)] = datetime.datetime.now()
+        ziparchive.extractall(arcloc)
+        index[arcloc] = _datetime_from_epoch(os.path.getmtime(archive))
 
         logging.info("Adding archive to the VCS: %s" % archive)
         for info in ziparchive.infolist():
@@ -149,7 +150,7 @@ def extract(args):
             logging.info("Extracting all of %s" % arcf)
             ziparchive = zipfile.ZipFile(arcf)
             ziparchive.extractall(arcloc)
-            index[arcloc] = datetime.datetime.now()
+            index[arcloc] = _datetime_from_epoch(os.path.getmtime(arcf))
             index_updated = True
 
             logging.info("Updating index for %s" % arcf)
@@ -164,7 +165,7 @@ def extract(args):
             if lastmod > index[arcloc]:
                 logging.info("Selectively extracting %s" % arcf)
                 ziparchive = zipfile.ZipFile(arcf)
-                index[arcloc] = datetime.datetime.now()
+                index[arcloc] = _datetime_from_epoch(os.path.getmtime(arcf))
                 index_updated = True
 
                 for info in ziparchive.infolist():
@@ -216,7 +217,6 @@ def combine(args):
             
         if combine:
             logging.info("Combining %s" % arcf)
-            index[arcloc] = datetime.datetime.now()
             index_updated = True
             ziparchive = zipfile.ZipFile(arcf, 'w', zipfile.ZIP_DEFLATED)
             for file in manifest:
@@ -224,6 +224,7 @@ def combine(args):
                     index[file] = _datetime_from_epoch(os.path.getmtime(file))
                     ziparchive.write(file, os.path.relpath(file, arcloc))
             ziparchive.close()
+            index[arcloc] = _datetime_from_epoch(os.path.getmtime(arcf))
 
     if index_updated: save_index(config, index)
 
