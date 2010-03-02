@@ -5,8 +5,7 @@
 #
 # Copyright 2010 Max Battcher. Some rights reserved.
 # Licensed for use under the Ms-RL. See attached LICENSE file.
-from subprocess import check_call
-import StringIO
+from subprocess import CalledProcessError, PIPE, Popen, check_call
 import argparse
 import datetime
 import logging
@@ -76,20 +75,21 @@ def save_index(config, index):
     f.close()
 
 def _datetime_from_epoch(epoch):
-    return datetime.datetime(*time.localtime()[:6])
+    return datetime.datetime(*time.localtime(epoch)[:6])
 
-def load_vcs_archive_manifest(config, archive):
-    logging.debug("Loading manifest for %s" % archive)
+def vcs_manifest(config):
+    logging.debug("Loading manifest")
     cmd = config["vcs_show_files"] if "vcs_show_files" in config \
         else DARCS_SHOW_FILES
     cmd = cmd.split(' ')
-    cmd.append(archive)
-    sf = StringIO.StringIO()
-    check_call(cmd, stdout=sf)
-    manifest = sf.getvalue()
-    sf.close()
+    pr = Popen(cmd, stdout=PIPE)
+    manifest = pr.communicate()[0]
+    if pr.returncode != 0:
+        raise CalledProcessError(pr.returncode, cmd[0])
+
     # ASSUME: Broken by newlines with no filenames with newlines
-    files = map(os.path.relpath, manifest.split('\n'))
+    files = [os.path.relpath(f.strip()) for f in manifest.split('\n')
+        if f.strip()]
     return files
 
 def vcs_add_file(config, file):
@@ -137,6 +137,8 @@ def extract(args):
 
     if args.archive: args.archive = map(os.path.relpath, args.archive)
 
+    manifest = vcs_manifest(config)
+
     for archive in config['archives']:
         arcf = archive['filename']
         arcloc = os.path.join(BASEDIR, arcf)
@@ -149,8 +151,6 @@ def extract(args):
             ziparchive.extractall(arcloc)
             index[arcloc] = datetime.datetime.now()
             index_updated = True
-
-            manifest = load_vcs_archive_manifest(config, arcloc)
 
             logging.info("Updating index for %s" % arcf)
             for info in ziparchive.infolist():
@@ -167,20 +167,18 @@ def extract(args):
                 index[arcloc] = datetime.datetime.now()
                 index_updated = True
 
-                manifest = load_vcs_archive_manifest(config, arcloc)
-
                 for info in ziparchive.infolist():
                     path = os.path.relpath(os.path.join(arcloc, info.filename))
                     # TODO: More efficient manifest check?
                     if path not in manifest:
                         logging.debug("Extracting new file %s" % path)
-                        ziparchive.extract(info, path)
+                        ziparchive.extract(info, arcloc)
                         vcs_add_file(config, path)
                         index[path] = datetime.datetime(*info.date_time)
                     elif path not in index \
                     or datetime.datetime(*info.date_time) > index[path]:
                         logging.debug("Extracting updated file %s" % path)
-                        ziparchive.extract(info, path)
+                        ziparchive.extract(info, arcloc)
                         index[path] = datetime.datetime(*info.date_time)
             
     if index_updated: save_index(config, index)
@@ -192,6 +190,8 @@ def combine(args):
 
     if args.archive: args.archive = map(os.path.relpath, args.archive)
 
+    manifest = vcs_manifest(config)
+
     for archive in config['archives']:
         combine = False
         arcf = archive['filename']
@@ -199,21 +199,20 @@ def combine(args):
         if args.archive and arcf not in args.archive:
             continue
 
-        manifest = load_vcs_manifest(config, arcloc)
-
         if args.force or arcloc not in index:
             combine = True
         else:
             logging.debug("Checking modification times for %s" % arcf)
             for file in manifest:
-                if file not in index:
-                    combine = True
-                    break
-                lastmod = _datetime_from_epoch(os.path.getmtime(file))
-                if lastmod > index[file]:
-                    combine = True
-                    break
-                # TODO: Check for deleted files?
+                if file.startswith(arcloc):
+                    if file not in index:
+                        combine = True
+                        break
+                    lastmod = _datetime_from_epoch(os.path.getmtime(file))
+                    if lastmod > index[file]:
+                        combine = True
+                        break
+                    # TODO: Check for deleted files?
             
         if combine:
             logging.info("Combining %s" % arcf)
@@ -221,8 +220,9 @@ def combine(args):
             index_updated = True
             ziparchive = zipfile.ZipFile(arcf, 'w', zipfile.ZIP_DEFLATED)
             for file in manifest:
-                index[file] = _datetime_from_epoch(os.path.getmtime(file))
-                ziparchive.write(file, os.path.relpath(file, arcloc))
+                if file.startswith(arcloc):
+                    index[file] = _datetime_from_epoch(os.path.getmtime(file))
+                    ziparchive.write(file, os.path.relpath(file, arcloc))
             ziparchive.close()
 
     if index_updated: save_index(config, index)
