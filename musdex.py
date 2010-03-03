@@ -18,7 +18,7 @@ import zipfile
 
 BASEDIR = "_musdex"
 DARCS_ADD = 'darcs add'
-DARCS_SHOW_FILES = 'darcs show files'
+DARCS_SHOW_FILES = 'darcs show files --no-directories'
 DEFAULT_CONFIG = os.path.join(BASEDIR, "musdex.yaml")
 DEFAULT_INDEX = os.path.join(BASEDIR, ".musdex.index.yaml")
 
