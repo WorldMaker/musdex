@@ -8,10 +8,11 @@ setup(
     author='Max Battcher',
     author_email='me@worldmaker.net',
     url='http://musdex.code.worldmaker.net',
-    py_modules=['musdex'],
+    packages=['musdex'],
     scripts=['musdex.py', 'xedsum.py'],
     requires=[
         'argparse',
+        'yaml',
     ],
     license='Microsoft Reciprocal License (Ms-RL)',
     classifiers=[
