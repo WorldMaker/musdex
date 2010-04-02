@@ -5,7 +5,7 @@
 #
 # Copyright 2010 Max Battcher. Some rights reserved.
 # Licensed for use under the Ms-RL. See attached LICENSE file.
-from subprocess import CalledProcessError, PIPE, Popen, check_call
+from config import BASEDIR, load_config, save_config, load_index, save_index
 import argparse
 import datetime
 import logging
@@ -13,91 +13,12 @@ import os
 import os.path
 import sys
 import time
-import yaml
 import zipfile
 
-BASEDIR = "_musdex"
-DARCS_ADD = 'darcs add'
-DARCS_SHOW_FILES = 'darcs show files --no-directories'
-DEFAULT_CONFIG = os.path.join(BASEDIR, "musdex.yaml")
-DEFAULT_INDEX = os.path.join(BASEDIR, ".musdex.index.yaml")
-
-def load_config(args):
-    conf = DEFAULT_CONFIG
-    if args.config:
-        conf = args.config
-    logging.debug("Loading configuration from %s" % conf)
-    if not os.path.exists(conf):
-        logging.info("No configuration file found at %s" % conf)
-        return {}
-    f = open(conf, 'r')
-    config = yaml.load(f)
-    f.close()
-    return config
-
-def save_config(args, config):
-    conf = DEFAULT_CONFIG
-    if args.config:
-        conf = args.config
-    logging.debug("Saving configuration to %s" % conf)
-    confdir = os.path.dirname(conf)
-    if confdir and not os.path.exists(confdir):
-        loggin.info("Config directory does not exist: %s" % confdir)
-        os.mkdirs(confdir)
-    new_conf = not os.path.exists(conf)
-    f = open(conf, 'w')
-    yaml.dump(config, f)
-    f.close()
-    if new_conf:
-        logging.info("Adding new configuration file to vcs: %s" % conf)
-        vcs_add_file(config, conf)
-
-# TODO: Perhaps the index should instead be a less verbose format?
-def load_index(config):
-    index = config['index'] if 'index' in config else DEFAULT_INDEX
-    if os.path.exists(index):
-        logging.debug("Loading existing index: %s" % index)
-        f = open(index, 'r')
-        index = yaml.load(f)
-        f.close()
-        return index
-    return {}
-
-def save_index(config, index):
-    idx = config['index'] if 'index' in config else DEFAULT_INDEX
-    logging.debug("Saving index: %s" % idx)
-    idxdir = os.path.dirname(idx)
-    if idxdir and not os.path.exists(idxdir):
-        logging.info("Index directory does not exist: %s" % idxdir)
-        os.mkdirs(idxdir)
-    f = open(idx, 'w')
-    yaml.dump(index, f)
-    f.close()
+import vcs
 
 def _datetime_from_epoch(epoch):
     return datetime.datetime(*time.localtime(epoch)[:6])
-
-def vcs_manifest(config):
-    logging.debug("Loading manifest")
-    cmd = config["vcs_show_files"] if "vcs_show_files" in config \
-        else DARCS_SHOW_FILES
-    cmd = cmd.split(' ')
-    pr = Popen(cmd, stdout=PIPE)
-    manifest = pr.communicate()[0]
-    if pr.returncode != 0:
-        raise CalledProcessError(pr.returncode, cmd[0])
-
-    # ASSUME: Broken by newlines with no filenames with newlines
-    files = [os.path.relpath(f.strip()) for f in manifest.split('\n')
-        if f.strip()]
-    return files
-
-def vcs_add_file(config, file):
-    logging.debug("Adding %s" % file)
-    cmd = config["vcs_add"] if "vcs_add" in config else DARCS_ADD
-    cmd = cmd.split(' ')
-    cmd.append(file)
-    check_call(cmd)
 
 def add(args):
     config = load_config(args)
@@ -123,7 +44,7 @@ def add(args):
         logging.info("Adding archive to the VCS: %s" % archive)
         for info in ziparchive.infolist():
             path = os.path.relpath(os.path.join(BASEDIR, archive, info.filename))
-            vcs_add_file(config, path)
+            vcs.add_file(config, path)
             index[path] = datetime.datetime(*info.date_time)
 
         if 'archives' not in config: config['archives'] = []
@@ -138,7 +59,7 @@ def extract(args):
 
     if args.archive: args.archive = map(os.path.relpath, args.archive)
 
-    manifest = vcs_manifest(config)
+    manifest = vcs.manifest(config)
 
     for archive in config['archives']:
         arcf = archive['filename']
@@ -157,7 +78,7 @@ def extract(args):
             for info in ziparchive.infolist():
                 path = os.path.relpath(os.path.join(arcloc, info.filename))
                 # TODO: More efficient manifest check?
-                if path not in manifest: vcs_add_file(config, path)
+                if path not in manifest: vcs.add_file(config, path)
                 index[path] = datetime.datetime(*info.date_time)
         else:
             logging.debug("Testing for extraction: %s" % arcf)
@@ -174,7 +95,7 @@ def extract(args):
                     if path not in manifest:
                         logging.debug("Extracting new file %s" % path)
                         ziparchive.extract(info, arcloc)
-                        vcs_add_file(config, path)
+                        vcs.add_file(config, path)
                         index[path] = datetime.datetime(*info.date_time)
                     elif path not in index \
                     or datetime.datetime(*info.date_time) > index[path]:
@@ -191,7 +112,7 @@ def combine(args):
 
     if args.archive: args.archive = map(os.path.relpath, args.archive)
 
-    manifest = vcs_manifest(config)
+    manifest = vcs.manifest(config)
 
     for archive in config['archives']:
         combine = False
