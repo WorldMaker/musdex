@@ -9,7 +9,7 @@ setup(
     author_email='me@worldmaker.net',
     url='http://musdex.code.worldmaker.net',
     packages=['musdex'],
-    scripts=['musdex.py', 'xedsum.py'],
+    scripts=['scripts/musdex', 'scripts/xedsum'],
     requires=[
         'argparse',
         'yaml',
