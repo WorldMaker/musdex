@@ -11,11 +11,13 @@ def main(booznik=False):
     import argparse
     import commands
     import logging
+    import sys
 
     parser = argparse.ArgumentParser(prog='musdex' if not booznik else 'xedsum')
     parser.add_argument('--config', '-c')
     parser.add_argument('--verbose', '-v', action="store_true", default=False)
     parser.add_argument('--quiet', '-q', action="store_true", default=False)
+    parser.add_argument('--handler', '-h')
     subparsers = parser.add_subparsers()
 
     parser_extract = subparsers.add_parser('extract')
