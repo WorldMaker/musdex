@@ -56,9 +56,7 @@ def extract(args, config):
         arcman = dict((f, index[f] if f in index else None) \
             for f in manifest if f.startswith(arcloc))
 
-        hname = None
-        if args.handler: hname = args.handler
-        elif 'handler' in archive: hname = archive['handler']
+        hname = archive['handler'] if 'handler' in archive else None
         handler = get_handler(hname)
         arch = handler(arcf, arcloc, manifest=arcman)
         files = arch.extract(force=args.force or arcloc not in index)
@@ -87,9 +85,7 @@ def combine(args, config):
         arcman = dict((f, index[f] if f in index else None) \
             for f in manifest if f.startswith(arcloc))
 
-        hname = None
-        if args.handler: hname = args.handler
-        elif 'handler' in archive: hname = archive['handler']
+        hname = archive['handler'] if 'handler' in archive else None
         handler = get_handler(hname)
         arch = handler(arcf, arcloc, manifest=arcman)
         files = arch.combine(force=args.force or arcloc not in index)

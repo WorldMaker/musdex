@@ -17,7 +17,6 @@ def main(booznik=False):
     parser.add_argument('--config', '-c')
     parser.add_argument('--verbose', '-v', action="store_true", default=False)
     parser.add_argument('--quiet', '-q', action="store_true", default=False)
-    parser.add_argument('--handler', '-h')
     subparsers = parser.add_subparsers()
 
     parser_extract = subparsers.add_parser('extract')
@@ -33,6 +32,7 @@ def main(booznik=False):
     parser_combine.set_defaults(func=commands.combine)
 
     parser_add = subparsers.add_parser('add')
+    parser_add.add_argument('--handler')
     parser_add.add_argument('archive', nargs='+')
     parser_add.set_defaults(func=commands.add)
 
