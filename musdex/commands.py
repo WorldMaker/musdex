@@ -3,9 +3,11 @@
 # Copyright 2010 Max Battcher. Some rights reserved.
 # Licensed for use under the Ms-RL. See attached LICENSE file.
 from config import BASEDIR, load_index, save_index, save_config
+from formatters import get_formatter
 from handlers import get_handler
 import logging
 import os.path
+import re
 
 import vcs
 
@@ -43,6 +45,12 @@ def extract(args, config):
     index = load_index(config)
     index_updated = False
 
+    fmts = []
+    if 'post_extract' in config:
+        logging.debug("Compiling post-extraction regular expressions")
+        fmts = [(re.compile(regex), get_formatter(fname)) \
+            for regex, fname in config['post_extract']]
+
     if args.archive: args.archive = map(os.path.relpath, args.archive)
 
     manifest = vcs.manifest(config)
@@ -64,6 +72,10 @@ def extract(args, config):
 
         for f, t in files:
             index[f] = t
+            for regex, fmt in fmts: # post-extract formatters
+                if regex.match(f):
+                    logging.debug("Post-extraction: %s(%s)" % fmt, f)
+                    fmt(f)
             if f not in arcman: vcs.add_file(config, f)
             
     if index_updated: save_index(config, index)
