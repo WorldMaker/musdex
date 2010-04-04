@@ -17,6 +17,8 @@ Contents:
    overview
    commands
    config
+   formatters
+   handlers
 
 Indices and tables
 ==================

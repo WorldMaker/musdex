@@ -3,7 +3,7 @@ from distutils.core import setup
 
 setup(
     name='musdex',
-    version='10.03.02',
+    version='10.04.04',
     description='musdex -- VCS-aware zip archive tool',
     author='Max Battcher',
     author_email='me@worldmaker.net',

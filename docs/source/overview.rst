@@ -58,7 +58,11 @@ hooks. It can be as simple as adding the following two lines to the
 repository's ``_darcs/prefs/defaults`` file::
 
   record prehook musdex
+  amend-record prehook musdex
+  apply prehook musdex
   apply posthook xedsum
+  pull prehook musdex
+  pull posthook xedsum
 
 This will automatically extract any changes from ``ADocument.ext``
 so that they can be recorded, and recombine any changes that are pulled
