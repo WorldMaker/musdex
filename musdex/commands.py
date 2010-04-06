@@ -83,7 +83,7 @@ def extract(args, config):
                 if regex.match(f):
                     logging.debug("Post-extraction: %s(%s)" % (fmt, f))
                     fmt(f)
-            if f not in arcman: vcs.add_file(config, f)
+            if f != arcloc and f not in arcman: vcs.add_file(config, f)
             
     if index_updated: save_index(config, index)
 

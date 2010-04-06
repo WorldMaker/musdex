@@ -42,7 +42,7 @@ class ZipArchiveHandler(object):
             ))
 
             for info in ziparchive.infolist():
-                path = os.path.relpath(os.path.join(self.archive,
+                path = os.path.relpath(os.path.join(self.location,
                     info.filename))
                 time = datetime.datetime(*info.date_time)
                 if path not in self.manifest:
