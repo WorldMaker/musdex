@@ -5,9 +5,11 @@
 from config import BASEDIR, load_index, save_index, save_config
 from formatters import get_formatter
 from handlers import get_handler
+import datetime
 import logging
 import os.path
 import re
+import time
 
 import vcs
 
@@ -59,6 +61,11 @@ def extract(args, config):
         arcf = archive['filename']
         arcloc = os.path.join(BASEDIR, arcf)
         if args.archive and arcf not in args.archive:
+            continue
+
+        # Check if up to date
+        arct = datetime.datetime(*time.localtime(os.path.getmtime(arcf))[:6])
+        if not args.force and arcloc in index and arct <= index[arcloc]:
             continue
 
         arcman = dict((f, index[f] if f in index else None) \
