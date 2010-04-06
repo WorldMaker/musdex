@@ -8,9 +8,16 @@ def xmllint(filename):
     subprocess.call(['xmllint', '--format', '--output', filename, filename])
 
 def remove_carriage_returns(filename):
-    import fileinput
-    for line in fileinput.input(filename, inplace=1):
-        print line.replace('\r', '')
+    import os
+    bakfile = "%s.bak~" % filename
+    os.rename(filename, bakfile)
+    inf = open(bakfile, 'rb')
+    outf = open(filename, 'wb')
+    for line in inf:
+        outf.write(line.replace('\r', ''))
+    inf.close()
+    outf.close()
+    os.remove(bakfile)
 
 _fmt_cache = {'xmllint': xmllint, 'removecrs': remove_carriage_returns}
 
