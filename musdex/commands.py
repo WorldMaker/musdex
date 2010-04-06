@@ -81,7 +81,7 @@ def extract(args, config):
             index[f] = t
             for regex, fmt in fmts: # post-extract formatters
                 if regex.match(f):
-                    logging.debug("Post-extraction: %s(%s)" % fmt, f)
+                    logging.debug("Post-extraction: %s(%s)" % (fmt, f))
                     fmt(f)
             if f not in arcman: vcs.add_file(config, f)
             
