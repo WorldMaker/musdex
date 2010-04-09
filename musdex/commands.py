@@ -7,8 +7,10 @@ from formatters import get_formatter
 from handlers import get_handler
 import datetime
 import logging
+import os
 import os.path
 import re
+import shutil
 import time
 
 import vcs
@@ -101,6 +103,12 @@ def combine(args, config):
         if args.archive and arcf not in args.archive:
             continue
 
+        bakfilename = None
+        if 'backup' not in config or config['backup']:
+            logging.debug('Backing up %s' % arcf)
+            bakfilename = arcf + '.bak~'
+            shutil.copyfile(arcf, bakfilename)
+
         arcman = dict((f, index[f] if f in index else None) \
             for f in manifest if f.startswith(arcloc))
 
@@ -114,6 +122,11 @@ def combine(args, config):
             index[f] = t
 
         # TODO: Check for deleted files?
+
+        if bakfilename is not None and ('leave_backups' not in config
+        or not config['leave_backups']):
+            logging.debug('Removing backup %s' % bakfilename)
+            os.remove(bakfilename)
 
     if index_updated: save_index(config, index)
 

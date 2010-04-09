@@ -24,6 +24,11 @@ repository.
 It performs a first extraction and adds all component files into the
 VCS.
 
+The ``--handler`` option can be used to provide the Python dotted module
+path to a custom handler for this archive. The default
+(``ZipArchiveHandler``) should be sufficient in most cases. (For more
+information about custom archive handlers see :doc:`handlers`.)
+
 ``musdex extract``
 ==================
 
@@ -54,6 +59,11 @@ compares the version control files to the last modification timestamps
 when they were extracted. If files have changed it will combine (or more
 likely re-combine) all of the necessary files to create an updated
 version of the respective archive.
+
+``musdex combine`` will, by default, make a backup for each archive
+prior to attempting combination and clean up its backup after a
+successful combination. (This behavior can be modified in the
+:doc:`config`.)
 
 The ``--force`` (or ``-f``) option can be provided to force ``musdex``
 to, regardless of timestamps, combine (or re-combine) every archive (or

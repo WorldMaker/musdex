@@ -10,14 +10,22 @@ version controlled. The full specification of this file is currently:
 
    vcs_add: vcstool command-to-add-a-file # default: darcs add
    vcs_show_files: vcstool list-of-files # default: darcs show files
+   backup: yes # create backups before calling combination handlers
+   leave_backups: no # remove backups after successful combination
    index: path/to/.musdex.index.yaml # default: _musdex/.musdex.index.yaml
    archives:
      - filename: archive1.zip
      - filename: path/to/archive2.docx
      - filename: archive3.odt
      - filename: archive4.celtx
+     - filename: archive5.custom
+       handler: custom.CustomHandler # archive handler
+   post_extract: # post-extraction formatters
+     - [.*\.xml, xmllint]
+     - [.*\.html, removecrs]
+     - [.*\.incustom, custom.InCustomFormatter]
 
-If the file does not exist, ``musdex`` will create implicitly during
+If the file does not exist, ``musdex`` will create it implicitly during
 ``musdex add``. To use a config file other than the default, the
 ``--config`` (or ``-c``) global option can be specified prior to the
 subcommand name.
