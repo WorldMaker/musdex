@@ -7,6 +7,7 @@ import logging
 import os.path
 
 DARCS_ADD = 'darcs add'
+DARCS_REMOVE = 'darcs remove'
 DARCS_SHOW_FILES = 'darcs show files --no-directories'
 
 def manifest(config):
@@ -27,6 +28,13 @@ def manifest(config):
 def add_file(config, file):
     logging.debug("Adding %s" % file)
     cmd = config["vcs_add"] if "vcs_add" in config else DARCS_ADD
+    cmd = cmd.split(' ')
+    cmd.append(file)
+    check_call(cmd)
+
+def remove_file(config, file):
+    logging.debug("Removing %s" % file)
+    cmd = config["vcs_remove"] if "vcs_remove" in config else DARCS_REMOVE
     cmd = cmd.split(' ')
     cmd.append(file)
     check_call(cmd)
