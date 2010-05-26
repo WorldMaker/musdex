@@ -36,6 +36,10 @@ def main(booznik=False):
     parser_add.add_argument('archive', nargs='+')
     parser_add.set_defaults(func=commands.add)
 
+    parser_remove = subparsers.add_parser('remove')
+    parser_remove.add_argument('archive', nargs='+')
+    parser_remove.set_defaults(func=commands.remove)
+
     args = sys.argv[1:]
     if len(args) == 0:
         args = ['extract'] if not booznik else ['combine']

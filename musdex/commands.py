@@ -45,6 +45,37 @@ def add(args, config):
     save_config(args, config)
     save_index(config, index)
 
+def remove(args, config):
+    index = load_index(config)
+
+    if 'archives' not in config:
+        logging.error("No archives have been configured.")
+        return
+
+    manifest = vcs.manifest(config)
+
+    for archive in args.archive:
+        archive = os.path.relpath(archive)
+        arcloc = os.path.join(BASEDIR, archive)
+
+        if not any(arc['filename'] == archive for arc in config['archives']):
+            logging.warn("Archive not configured: %s" % archive)
+            continue
+
+        logging.info("Removing archive files from VCS.")
+        for f in manifest:
+            if f.startswith(arcloc):
+                vcs.remove_file(config, f)
+
+                if f in index:
+                    del index[f]
+
+        config['archives'] = [arc for arc in config['archives'] \
+            if arc['filename'] != archive]
+    
+    save_config(args, config)
+    save_index(config, index)
+
 def extract(args, config):
     index = load_index(config)
     index_updated = False
