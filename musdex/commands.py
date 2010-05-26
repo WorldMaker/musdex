@@ -111,6 +111,10 @@ def extract(args, config):
         if files: index_updated = True
 
         for f, t in files:
+            if t is None: # File was removed
+                del index[f]
+                vcs.remove_file(config, f)
+                continue
             index[f] = t
             for regex, fmt in fmts: # post-extract formatters
                 if regex.match(f):
@@ -151,8 +155,6 @@ def combine(args, config):
 
         for f, t in files:
             index[f] = t
-
-        # TODO: Check for deleted files?
 
         if bakfilename is not None and ('leave_backups' not in config
         or not config['leave_backups']):

@@ -22,6 +22,7 @@ class ZipArchiveHandler(object):
 
     def extract(self, force=False):
         extracted = []
+        manifestfiles = set(self.manifest.keys())
         if force:
             logging.info("Extracting all of %s" % self.archive)
             ziparchive = zipfile.ZipFile(self.archive)
@@ -34,6 +35,7 @@ class ZipArchiveHandler(object):
                 path = os.path.relpath(os.path.join(self.location,
                     info.filename))
                 extracted.append((path, datetime.datetime(*info.date_time)))
+                if path in manifestfiles: manifestfiles.remove(path)
         else:
             logging.info("Selectively extracting %s" % self.archive)
             ziparchive = zipfile.ZipFile(self.archive)
@@ -53,6 +55,12 @@ class ZipArchiveHandler(object):
                     logging.debug("Extracting updated file %s" % path)
                     ziparchive.extract(info, self.location)
                     extracted.append((path, time))
+                if path in manifestfiles: manifestfiles.remove(path)
+
+        # Check for removed files
+        if manifestfiles:
+            for f in manifestfiles:
+                extracted.append((f, None))
         return extracted
 
     def combine(self, force=False):
