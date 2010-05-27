@@ -9,6 +9,7 @@ version controlled. The full specification of this file is currently:
 .. sourcecode:: yaml
 
    vcs_add: vcstool command-to-add-a-file # default: darcs add
+   vcs_remove: vcstool command-to-remove-a-file # default: darcs remove
    vcs_show_files: vcstool list-of-files # default: darcs show files
    backup: yes # create backups before calling combination handlers
    leave_backups: no # remove backups after successful combination

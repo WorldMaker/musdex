@@ -50,6 +50,10 @@ time (as a ``datetime.datetime`` object). Additionally, if anything is
 expanded, there should be a tuple for the ``location`` itself, with the
 last modification date of the ``archive`` itself.
 
+The handler can return ``None`` as the last modification time for a file
+path to indicate that a file was removed from the archive and should be
+removed from the VCS.
+
 .. function:: combine(self, force=False)
 
 The handler is expected to combine files within the ``manifest`` (under

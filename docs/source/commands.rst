@@ -2,13 +2,23 @@
 Commands
 ========
 
+.. program:: musdex
+
 ``musdex`` is composed of a trio of subcommands, and one handy shortcut.
 With no arguments provided, ``musdex`` defaults to its incremental
-extraction tool, and it's "boozniked" inverse ``xedsum`` similarly
-defaults to the incremental combination tool.
+extraction tool.
+
+.. program:: xedsum
+
+The "boozniked" inverse ``xedsum`` similarly defaults to the incremental
+combination tool.
 
 Output Verbosity
 ================
+
+.. program:: musdex
+.. cmdoption:: -v, --verbose
+.. cmdoption:: -q, --quiet
 
 ``musdex --verbose`` (or ``-v``) will print additional debugging
 information, and ``musdex --quiet`` (or ``-q``) will print only warnings
@@ -18,19 +28,33 @@ name.
 ``musdex add``
 ==============
 
+.. program:: musdex add
+
 ``musdex add`` adds one or more archives into the documentation
 repository.
 
 It performs a first extraction and adds all component files into the
 VCS.
 
+.. cmdoption:: --handler
+
 The ``--handler`` option can be used to provide the Python dotted module
 path to a custom handler for this archive. The default
 (``ZipArchiveHandler``) should be sufficient in most cases. (For more
 information about custom archive handlers see :doc:`handlers`.)
 
+``musdex remove``
+=================
+
+.. program:: musdex remove
+
+``musdex remove`` removes one or more archives from the documentation
+repository and VCS control.
+
 ``musdex extract``
 ==================
+
+.. program:: musdex extract
 
 ``musdex extract`` runs through the archives under the musdex
 documentation repository (or a subset thereof if archives are provided
@@ -42,12 +66,16 @@ times and extracts only the ones that have been recently modified. It
 additionally works to only extract the component parts themselves that
 have been modified.
 
+.. cmdoption:: -f, --force
+
 The ``--force`` (or ``-f``) option can be provided to force ``musdex``
 to extract (or re-extract) every file in every archive (or a subset
 thereof, if other arguments are provided).
 
 ``musdex combine``
 ==================
+
+.. program:: musdex combine
 
 ``musdex combine`` runs through the files under version control related
 to the archives in the musdex documentation repository (or a subset of
@@ -64,6 +92,8 @@ version of the respective archive.
 prior to attempting combination and clean up its backup after a
 successful combination. (This behavior can be modified in the
 :doc:`config`.)
+
+.. cmdoption:: -f, --force
 
 The ``--force`` (or ``-f``) option can be provided to force ``musdex``
 to, regardless of timestamps, combine (or re-combine) every archive (or
