@@ -21,27 +21,20 @@ class ZipArchiveHandler(object):
         return zipfile.is_zipfile(self.archive)
 
     def extract(self, force=False):
-        extracted = []
         manifestfiles = set(self.manifest.keys())
         if force:
             logging.info("Extracting all of %s" % self.archive)
             ziparchive = zipfile.ZipFile(self.archive)
             ziparchive.extractall(self.location)
-            extracted.append((self.location,
-                _datetime_from_epoch(os.path.getmtime(self.archive)),
-            ))
 
             for info in ziparchive.infolist():
                 path = os.path.relpath(os.path.join(self.location,
                     info.filename))
-                extracted.append((path, datetime.datetime(*info.date_time)))
+                yield (path, datetime.datetime(*info.date_time))
                 if path in manifestfiles: manifestfiles.remove(path)
         else:
             logging.info("Selectively extracting %s" % self.archive)
             ziparchive = zipfile.ZipFile(self.archive)
-            extracted.append((self.location,
-                _datetime_from_epoch(os.path.getmtime(self.archive)),
-            ))
 
             for info in ziparchive.infolist():
                 path = os.path.relpath(os.path.join(self.location,
@@ -50,44 +43,34 @@ class ZipArchiveHandler(object):
                 if path not in self.manifest:
                     logging.debug("Extracting new file %s" % path)
                     ziparchive.extract(info, self.location)
-                    extracted.append((path, time))
+                    yield (path, time)
                 elif time > self.manifest[path]:
                     logging.debug("Extracting updated file %s" % path)
                     ziparchive.extract(info, self.location)
-                    extracted.append((path, time))
+                    yield (path, time)
                 if path in manifestfiles: manifestfiles.remove(path)
 
         # Check for removed files
         if manifestfiles:
             for f in manifestfiles:
-                extracted.append((f, None))
-        return extracted
+                yield (f, None)
 
-    def combine(self, force=False):
-        combined = []
-        combine = force
-        if not force:
-            logging.debug("Checking modification times for %s" % self.archive)
-            for file in self.manifest:
-                if self.manifest[file] == None:
-                    combine = True
-                elif _datetime_from_epoch(os.path.getmtime(file)) \
-                > self.manifest[file]:
-                    combine = True            
-        if combine:
-            logging.info("Combining %s" % self.archive)
-            ziparchive = zipfile.ZipFile(self.archive, 'w',
-                zipfile.ZIP_DEFLATED)
-            for file in self.manifest:
-                combined.append((file,
-                    _datetime_from_epoch(os.path.getmtime(file)),
-                ))
-                ziparchive.write(file, os.path.relpath(file, self.location))
-            ziparchive.close()
-            combined.append((self.location,
-                _datetime_from_epoch(os.path.getmtime(self.archive)),
-            ))
-        return combined
+        yield (self.location,
+            _datetime_from_epoch(os.path.getmtime(self.archive)))
+
+    def combine(self, force=False):           
+        # We can ignore force here, because zipfile doesn't have strong
+        # support for incremental file updates so we are *always*
+        # re-combining the entire file.
+        logging.info("Combining %s" % self.archive)
+        ziparchive = zipfile.ZipFile(self.archive, 'w',
+            zipfile.ZIP_DEFLATED)
+        for file in self.manifest:
+            ziparchive.write(file, os.path.relpath(file, self.location))
+            yield (file, _datetime_from_epoch(os.path.getmtime(file)))
+        ziparchive.close()
+        yield (self.location, 
+            _datetime_from_epoch(os.path.getmtime(self.archive)))
 
 _handler_cache = {}
 

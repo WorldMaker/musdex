@@ -138,14 +138,24 @@ def combine(args, config):
         if args.archive and arcf not in args.archive:
             continue
 
+        arcman = dict((f, index[f] if f in index else None) \
+            for f in manifest if f.startswith(arcloc))
+
+        logging.debug("Checking modification times for %s" % self.archive)
+        def mtime(F):
+            return datetime.datetime(*time.localtime(os.path.getmtime(F)))
+        # Unless forced or first-time combination, we do a quick sanity
+        # check to see if any of the archive's files have changed
+        if not args.force and arcloc in index and not \
+        any(mtime(f) > arcman[f] if arcman[f] is not None else True \
+        for f in arcman):
+            continue
+
         bakfilename = None
         if 'backup' not in config or config['backup']:
             logging.debug('Backing up %s' % arcf)
             bakfilename = arcf + '.bak~'
             shutil.copyfile(arcf, bakfilename)
-
-        arcman = dict((f, index[f] if f in index else None) \
-            for f in manifest if f.startswith(arcloc))
 
         hname = archive['handler'] if 'handler' in archive else None
         handler = get_handler(hname)
