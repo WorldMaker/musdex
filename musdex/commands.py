@@ -15,6 +15,9 @@ import time
 
 import vcs
 
+def _mtime(F):
+    return datetime.datetime(*time.localtime(os.path.getmtime(F))[:6])
+
 def add(args, config):
     index = load_index(config)
 
@@ -97,8 +100,8 @@ def extract(args, config):
             continue
 
         # Check if up to date
-        arct = datetime.datetime(*time.localtime(os.path.getmtime(arcf))[:6])
-        if not args.force and arcloc in index and arct <= index[arcloc]:
+        if not args.force and arcloc in index \
+        and _mtime(arcf) <= index[arcloc]:
             continue
 
         arcman = dict((f, index[f] if f in index else None) \
@@ -141,13 +144,11 @@ def combine(args, config):
         arcman = dict((f, index[f] if f in index else None) \
             for f in manifest if f.startswith(arcloc))
 
-        logging.debug("Checking modification times for %s" % self.archive)
-        def mtime(F):
-            return datetime.datetime(*time.localtime(os.path.getmtime(F)))
+        logging.debug("Checking modification times for %s" % arcf)
         # Unless forced or first-time combination, we do a quick sanity
         # check to see if any of the archive's files have changed
         if not args.force and arcloc in index and not \
-        any(mtime(f) > arcman[f] if arcman[f] is not None else True \
+        any(_mtime(f) > arcman[f] if arcman[f] is not None else True \
         for f in arcman):
             continue
 
