@@ -9,6 +9,9 @@ Welcome to musdex's documentation!
 ``musdex`` is a VCS-aware zip archive tool. It is designed to automate the
 storage of zipped documents as individual components in a VCS.
 
+For those interested in hacking on ``musdex``, the official source
+repository: http://musdex.code.worldmaker.net
+
 Contents:
 
 .. toctree::
