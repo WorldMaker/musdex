@@ -29,7 +29,8 @@ def add(args, config):
             continue
 
         handler = get_handler(args.handler)
-        arch = handler(archive, os.path.join(BASEDIR, archive))
+        arcloc = os.path.join(BASEDIR, archive)
+        arch = handler(archive, arcloc)
         if not arch.check():
             logging.error("Archive not supported by given handler: %s: %s" % (
                 args.handler, archive))
@@ -38,7 +39,7 @@ def add(args, config):
         files = arch.extract(force=True)
         for f, t in files:
             index[f] = t
-            vcs.add_file(config, f)
+            if f != arcloc: vcs.add_file(config, f)
 
         entry = {'filename': archive}
         if args.handler: entry['handler'] = args.handler
