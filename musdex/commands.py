@@ -35,7 +35,7 @@ def add(args, config):
                 args.handler, archive))
 
         logging.info("Extracting archive for the first time: %s" % archive)
-        files = handler.extract(force=True)
+        files = arch.extract(force=True)
         for f, t in files:
             index[f] = t
             vcs.add_file(config, f)
