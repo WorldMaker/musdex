@@ -192,3 +192,14 @@ latex_documents = [
 
 # If false, no module index is generated.
 #latex_use_modindex = True
+
+# -- Options for man output --
+
+# This value determines how to group the document tree into manual pages.
+# It must be a list of tuples 
+# (startdocname,  name, description, authors, section)
+man_pages = [
+  ('commands', 'musdex', 'musdex', 'Max Battcher <me@worldmaker.net>', 1),
+  ('commands', 'xedsum', 'xedsum (musdex boozniked)',
+    'Max Battcher <me@worldmaker.net>', 1),
+]
