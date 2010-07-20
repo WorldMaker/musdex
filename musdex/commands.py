@@ -154,7 +154,8 @@ def combine(args, config):
             continue
 
         bakfilename = None
-        if 'backup' not in config or config['backup']:
+        if ('backup' not in config or config['backup']) \
+        and os.path.exists(arcf):
             logging.debug('Backing up %s' % arcf)
             bakfilename = arcf + '.bak~'
             shutil.copyfile(arcf, bakfilename)
