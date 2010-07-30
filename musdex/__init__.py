@@ -32,6 +32,8 @@ def main(booznik=False):
     parser_combine.set_defaults(func=commands.combine)
 
     parser_add = subparsers.add_parser('add')
+    parser_add.add_argument('--new', '-n', action="store_true",
+        default=False)
     parser_add.add_argument('--handler')
     parser_add.add_argument('archive', nargs='+')
     parser_add.set_defaults(func=commands.add)

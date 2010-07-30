@@ -31,15 +31,23 @@ def add(args, config):
         handler = get_handler(args.handler)
         arcloc = os.path.join(BASEDIR, archive)
         arch = handler(archive, arcloc)
-        if not arch.check():
-            logging.error("Archive not supported by given handler: %s: %s" % (
-                args.handler, archive))
+        if args.new:
+            if not os.path.exists(arcloc):
+                os.makedirs(arcloc)
+                vcs.add_file(arcloc)
+            for f, t in arch.combine(force=True):
+                index[f] = t
+        else:
+            if not arch.check():
+                logging.error("Archive not supported by given handler: %s: %s" % (
+                    args.handler, archive))
+                continue
 
-        logging.info("Extracting archive for the first time: %s" % archive)
-        files = arch.extract(force=True)
-        for f, t in files:
-            index[f] = t
-            if f != arcloc: vcs.add_file(config, f)
+            logging.info("Extracting archive for the first time: %s" % archive)
+            files = arch.extract(force=True)
+            for f, t in files:
+                index[f] = t
+                if f != arcloc: vcs.add_file(config, f)
 
         entry = {'filename': archive}
         if args.handler: entry['handler'] = args.handler

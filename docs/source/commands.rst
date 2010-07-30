@@ -43,6 +43,12 @@ path to a custom handler for this archive. The default
 (``ZipArchiveHandler``) should be sufficient in most cases. (For more
 information about custom archive handlers see :doc:`handlers`.)
 
+.. cmdoption:: --new
+
+The ``--new`` option is used to create a new archive. ``musdex`` will
+attempt to create it by forcing a combination of an empty archive. This
+is an advanced option that may not work with all file formats/handlers.
+
 ``musdex remove``
 =================
 
