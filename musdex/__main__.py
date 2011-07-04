@@ -53,6 +53,9 @@ def main(booznik=False):
     config = load_config(args)
     args.func(args, config)
 
+def xedsum():
+    main(True)
+
 if __name__ == "__main__":
     main()
 

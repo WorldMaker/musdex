@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='musdex',
@@ -9,7 +9,13 @@ setup(
     author_email='me@worldmaker.net',
     url='http://musdex.code.worldmaker.net',
     packages=['musdex'],
-    scripts=['scripts/musdex', 'scripts/xedsum'],
+    #scripts=['scripts/musdex', 'scripts/xedsum'],
+    entry_points={
+        'console_scripts': [
+            'musdex = musdex.__main__:main',
+            'xedsum = musdex.__main__:xedsum',
+        ]
+    },
     requires=[
         'argparse',
         'yaml',
