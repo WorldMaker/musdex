@@ -3,7 +3,7 @@ from distutils.core import setup
 
 setup(
     name='musdex',
-    version='10.07.20',
+    version='11.07.04',
     description='musdex -- VCS-aware zip archive tool',
     author='Max Battcher',
     author_email='me@worldmaker.net',
@@ -24,6 +24,7 @@ setup(
         'Programming Language :: Python :: 2.6',
         'Topic :: Software Development :: Version Control',
     ],
+    zip_safe=True,
 )
 
 # vim: ai et ts=4 sts=4 sw=4
