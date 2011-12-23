@@ -34,7 +34,7 @@ def add(args, config):
         if args.new:
             if not os.path.exists(arcloc):
                 os.makedirs(arcloc)
-                vcs.add_file(arcloc)
+                vcs.add_file(config, arcloc)
             for f, t in arch.combine(force=True):
                 index[f] = t
         else:
