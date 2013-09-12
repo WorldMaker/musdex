@@ -54,7 +54,7 @@ normal darcs record, such as::
    the musdex hidden "index" file.
 
 To keep the document automatically in sync, you can make use of darcs
-hooks. It can be as simple as adding the following two lines to the
+hooks. It can be as simple as adding the following lines to the
 repository's ``_darcs/prefs/defaults`` file::
 
   record prehook musdex
@@ -82,5 +82,40 @@ Don't forget to copy the lines into the new repository's
 ``_darcs/prefs/defaults``.
 
 .. _darcs: http://darcs.net
+
+=========================
+Using ``musdex`` With Git
+=========================
+
+``musdex`` can easily be configured to work with git as its VCS.
+
+To begin, you will want to create at the level of your repository you
+expect to use it a ``_musdex`` folder and a ``musdex.yaml`` file under
+that folder.
+
+The settings you will need in your ``musdex.yaml`` for git:
+
+.. sourcecode:: yaml
+
+   vcs_add: "git add -- "
+   vcs_remove: "git rm -- "
+   vcs_show_files: "git ls-tree -r --name-only HEAD"
+
+
+After that you can use ``musdex add`` as expected.
+
+---------
+Git Hooks
+---------
+
+A minimal ``.git/hooks/pre-commit``::
+
+  #!/bin/sh
+  musdex
+
+A minimal ``.git/hooks/post-checkout`` and ``.git/hooks/post-merge``::
+
+  #!/bin/sh
+  xedsum
 
 .. vim: ai spell tw=72
