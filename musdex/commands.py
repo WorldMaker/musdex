@@ -2,9 +2,6 @@
 #
 # Copyright 2010 Max Battcher. Some rights reserved.
 # Licensed for use under the Ms-RL. See attached LICENSE file.
-from config import BASEDIR, load_index, save_index, save_config
-from formatters import get_formatter
-from handlers import get_handler
 import datetime
 import logging
 import os
@@ -13,7 +10,10 @@ import re
 import shutil
 import time
 
-import vcs
+from .config import BASEDIR, load_index, save_index, save_config
+from .formatters import get_formatter
+from .handlers import get_handler
+from . import vcs
 
 def _mtime(F):
     return datetime.datetime(*time.localtime(os.path.getmtime(F))[:6])

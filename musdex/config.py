@@ -7,7 +7,7 @@ import os
 import os.path
 import yaml
 
-import vcs
+from . import vcs
 
 BASEDIR = "_musdex"
 DEFAULT_CONFIG = os.path.join(BASEDIR, "musdex.yaml")

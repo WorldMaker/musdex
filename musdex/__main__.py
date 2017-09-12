@@ -7,9 +7,9 @@
 # Licensed for use under the Ms-RL. See attached LICENSE file.
 
 def main(booznik=False):
-    from config import load_config
+    from .config import load_config
+    from . import commands
     import argparse
-    import commands
     import logging
     import sys
 
