@@ -6,7 +6,22 @@
 # Copyright 2010 Max Battcher. Some rights reserved.
 # Licensed for use under the Ms-RL. See attached LICENSE file.
 
+"""
+musdex
+------
+
+musdex is a VCS-aware zip archive tool
+
+Current documentation site: http://pythonhosted.org/musdex/
+"""
+
 def main(booznik=False):
+    """
+    Parse command line arguments and pass to individual commands
+
+    Booznik is a "reversed spell" in Zork lore and used to refer to when main
+    has been called from the command line as "xedsum" rather than "musdex".
+    """
     try:
         from .config import load_config
     except ImportError:
@@ -27,19 +42,19 @@ def main(booznik=False):
 
     parser_extract = subparsers.add_parser('extract')
     parser_extract.add_argument('--force', '-f', action="store_true",
-        default=False)
+                                default=False)
     parser_extract.add_argument('archive', nargs='*')
     parser_extract.set_defaults(func=commands.extract)
-    
+
     parser_combine = subparsers.add_parser('combine')
     parser_combine.add_argument('--force', '-f', action="store_true",
-        default=False)
+                                default=False)
     parser_combine.add_argument('archive', nargs='*')
     parser_combine.set_defaults(func=commands.combine)
 
     parser_add = subparsers.add_parser('add')
     parser_add.add_argument('--new', '-n', action="store_true",
-        default=False)
+                            default=False)
     parser_add.add_argument('--handler')
     parser_add.add_argument('archive', nargs='+')
     parser_add.set_defaults(func=commands.add)
@@ -49,7 +64,7 @@ def main(booznik=False):
     parser_remove.set_defaults(func=commands.remove)
 
     args = sys.argv[1:]
-    if len(args) == 0:
+    if not any(args):
         args = ['extract'] if not booznik else ['combine']
     args = parser.parse_args(args)
     if args.verbose:
@@ -60,6 +75,9 @@ def main(booznik=False):
     args.func(args, config)
 
 def xedsum():
+    """
+    Boozniked entry point to musdex
+    """
     main(True)
 
 if __name__ == "__main__":

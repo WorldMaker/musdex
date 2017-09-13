@@ -1,3 +1,12 @@
+"""
+musdex
+------
+
+musdex is a VCS-aware zip archive tool
+
+Current documentation site: http://pythonhosted.org/musdex/
+"""
+
 if __name__ == '__main__':
     import os
     import sys

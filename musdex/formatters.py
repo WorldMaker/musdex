@@ -1,18 +1,25 @@
-# File post-extraction formatters for musdex
-#
+"""
+File post-extraction formatters for musdex
+"""
 # Copyright 2010 Max Battcher. Some rights reserved.
 # Licensed for use under the Ms-RL. See attached LICENSE file.
 import importlib
 import logging
+import os
 import os.path
 import sys
 import subprocess
 
 def xmllint(filename):
+    """
+    Pass file to xmllint command line tool
+    """
     subprocess.call(['xmllint', '--format', '--output', filename, filename])
 
 def remove_carriage_returns(filename):
-    import os
+    """
+    Remove carriage returns (\r) from file
+    """
     bakfile = "%s.bak~" % filename
     os.rename(filename, bakfile)
     inf = open(bakfile, 'rb')
@@ -23,12 +30,15 @@ def remove_carriage_returns(filename):
     outf.close()
     os.remove(bakfile)
 
-_fmt_cache = {'xmllint': xmllint, 'removecrs': remove_carriage_returns}
+FORMATTER_CACHE = {'xmllint': xmllint, 'removecrs': remove_carriage_returns}
 
 def get_formatter(name=None):
+    """
+    Find a formatter of a given name
+    """
     if name is None:
         return
-    elif name not in _fmt_cache:
+    elif name not in FORMATTER_CACHE:
         logging.debug('Importing formatter: %s', name)
         pieces = name.rsplit('.', 1)
         _temp = None
@@ -38,7 +48,7 @@ def get_formatter(name=None):
             logging.warning('Adding current directory to search path for formatter: %s', name)
             sys.path.append(os.getcwd())
             _temp = importlib.import_module(pieces[0])
-        _fmt_cache[name] = getattr(_temp, pieces[1])
-    return _fmt_cache[name]
+        FORMATTER_CACHE[name] = getattr(_temp, pieces[1])
+    return FORMATTER_CACHE[name]
 
 # vim: ai et ts=4 sts=4 sw=4
