@@ -7,8 +7,14 @@
 # Licensed for use under the Ms-RL. See attached LICENSE file.
 
 def main(booznik=False):
-    from .config import load_config
-    from . import commands
+    try:
+        from .config import load_config
+    except ImportError:
+        from musdex.config import load_config
+    try:
+        from . import commands
+    except ImportError:
+        from musdex import commands
     import argparse
     import logging
     import sys

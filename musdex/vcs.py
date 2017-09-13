@@ -2,7 +2,7 @@
 #
 # Copyright 2010 Max Battcher. Some rights reserved.
 # Licensed for use under the Ms-RL. See attached LICENSE file.
-from subprocess import CalledProcessError, PIPE, Popen, check_call
+from subprocess import check_call, check_output
 import logging
 import os.path
 
@@ -15,15 +15,10 @@ def manifest(config):
     cmd = config["vcs_show_files"] if "vcs_show_files" in config \
         else DARCS_SHOW_FILES
     cmd = cmd.split(' ')
-    pr = Popen(cmd, stdout=PIPE)
-    manifest = pr.communicate()[0]
-    if pr.returncode != 0:
-        raise CalledProcessError(pr.returncode, cmd[0])
+    output = check_output(cmd, universal_newlines=True)
 
     # ASSUME: Broken by newlines with no filenames with newlines
-    files = [os.path.relpath(f.strip()) for f in manifest.split('\n')
-        if f.strip()]
-    return files
+    return (f for f in output.splitlines() if f)
 
 def add_file(config, file):
     logging.debug("Adding %s" % file)

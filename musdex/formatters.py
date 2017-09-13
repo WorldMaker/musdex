@@ -2,6 +2,10 @@
 #
 # Copyright 2010 Max Battcher. Some rights reserved.
 # Licensed for use under the Ms-RL. See attached LICENSE file.
+import importlib
+import logging
+import os.path
+import sys
 import subprocess
 
 def xmllint(filename):
@@ -25,13 +29,15 @@ def get_formatter(name=None):
     if name is None:
         return
     elif name not in _fmt_cache:
+        logging.debug('Importing formatter: %s', name)
         pieces = name.rsplit('.', 1)
-        _temp = __import__(pieces[0],
-            globals(),
-            locals(),
-            [pieces[1]],
-            -1,
-        )
+        _temp = None
+        try:
+            _temp = importlib.import_module(pieces[0])
+        except ImportError:
+            logging.warning('Adding current directory to search path for formatter: %s', name)
+            sys.path.append(os.getcwd())
+            _temp = importlib.import_module(pieces[0])
         _fmt_cache[name] = getattr(_temp, pieces[1])
     return _fmt_cache[name]
 
