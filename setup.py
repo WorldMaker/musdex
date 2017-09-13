@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='musdex',
-    version='17.09.12',
+    version='17.09.13',
     description='musdex -- VCS-aware zip archive tool',
     author='Max Battcher',
     author_email='me@worldmaker.net',
